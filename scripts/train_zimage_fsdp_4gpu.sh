@@ -30,7 +30,7 @@ TRAIN_PROMPT="${TRAIN_PROMPT:-$ROOT/test_prompts.txt}"
 MODEL_ID="${MODEL_ID:-Tongyi-MAI/Z-Image}"
 
 # ── W&B ─────────────────────────────────────────────────────────────────────
-WANDB_ENTITY="${WANDB_ENTITY:-dummy}"
+WANDB_ENTITY="${WANDB_ENTITY}"
 WANDB_PROJECT="${WANDB_PROJECT:-zimage_dmd2}"
 WANDB_NAME="${WANDB_NAME:-fsdp_4gpu_$(date +%s)}"
 
@@ -39,7 +39,7 @@ mkdir -p "$OUTPUT_PATH" "$LOG_PATH" "$CACHE_DIR"
 # Use exactly 4 GPUs.  Change the indices if needed.
 export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-0,1,2,3}"
 
-WANDB_MODE=offline \
+WANDB_MODE=online \
 accelerate launch \
     --config_file "$ROOT/fsdp_configs/fsdp_4gpu.yaml" \
     "$ROOT/main/zimage/train_zimage.py" \

@@ -471,6 +471,18 @@ class Trainer:
 
                 wandb.log(data_dict, step=self.step)
 
+        # ── Stdout progress ──────────────────────────────────────────────────
+        if accelerator.is_main_process:
+            parts = [f"step {self.step}"]
+            if "loss_dm" in loss_dict:
+                parts.append(f"loss_dm={loss_dict['loss_dm'].item():.4f}")
+            parts.append(f"loss_fake={guidance_loss_dict['loss_fake_mean'].item():.4f}")
+            if COMPUTE_GENERATOR_GRADIENT:
+                parts.append(f"gen_gnorm={generator_grad_norm.item():.3f}")
+            parts.append(f"guid_gnorm={guidance_grad_norm.item():.3f}")
+            parts.append(f"lat_mean={gen_mean.item():.3f}")
+            print("  ".join(parts), flush=True)
+
         self.accelerator.wait_for_everyone()
 
     def train(self):
