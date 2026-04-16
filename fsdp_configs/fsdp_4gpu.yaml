@@ -1,0 +1,42 @@
+compute_environment: LOCAL_MACHINE
+debug: false
+distributed_type: FSDP
+downcast_bf16: 'no'
+fsdp_config:
+  # Use TRANSFORMER_BASED_WRAP so every ZImageTransformerBlock gets its own
+  # FSDP unit.  SIZE_BASED_WRAP leaves the outer model shell un-sharded on
+  # rank 0, which is the main cause of device-0 OOM on large models.
+  fsdp_auto_wrap_policy: TRANSFORMER_BASED_WRAP
+  fsdp_transformer_layer_cls_to_wrap: ZImageTransformerBlock
+  fsdp_backward_prefetch_policy: BACKWARD_PRE
+  fsdp_forward_prefetch: false
+  # fsdp_min_num_params is ignored when TRANSFORMER_BASED_WRAP is used
+  fsdp_offload_params: false
+  # FULL_SHARD (strategy 1): maximum memory savings — every rank holds 1/N
+  # of parameters, gradients, and optimizer state.
+  fsdp_sharding_strategy: 1
+  fsdp_state_dict_type: FULL_STATE_DICT
+  # false → disable accelerate's "rank-0-only load + broadcast" mechanism.
+  # Our training script does its own custom FSDP sync (saves a checkpoint and
+  # has all ranks reload it before accelerator.prepare()), so we don't need
+  # accelerate's efficient-loading path.  Must be false when sync_module_states
+  # is false; accelerate 1.13.0 defaults this to true, which would conflict.
+  fsdp_cpu_ram_efficient_loading: false
+  # false → each rank loads the model from CPU independently (no rank-0
+  # broadcast), so rank 0 never holds the full model on GPU before sharding.
+  fsdp_sync_module_states: false
+  # true → lets FSDP track original (unflattened) parameter names, which
+  # is required for gradient-checkpointing + FSDP to work correctly and
+  # avoids some optimizer-state memory fragmentation on rank 0.
+  fsdp_use_orig_params: true
+machine_rank: 0
+main_training_function: main
+mixed_precision: 'no'
+num_machines: 1
+num_processes: 4
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false
